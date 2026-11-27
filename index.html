@@ -19,7 +19,7 @@
       <li class="nav__more"><a href="#work">Work</a></li>
       <li class="nav__more"><a href="#services">Services</a></li>
       <li class="nav__more"><a href="#about">About</a></li>
-      <li><a class="btn btn--line" href="#contact">Book a call</a></li>
+      <li><a class="btn btn--line" href="#contact" data-interest="Intro call">Book a call</a></li>
     </ul>
   </nav>
 </header>
@@ -37,7 +37,7 @@
           <div class="hero__foot">
             <p class="lead">We translate complex innovation for the buyers, investors and talent you need.</p>
             <div class="actions">
-              <a class="btn btn--primary" href="#contact">Book an intro call</a>
+              <a class="btn btn--primary" href="#contact" data-interest="Intro call">Book an intro call</a>
               <a class="btn btn--line" href="#work">See the work</a>
             </div>
           </div>
@@ -104,7 +104,7 @@
           <div class="offer__intro">
             <h3>Marketing strategy and consulting</h3>
             <p>We plan backwards from your business goal: a contract, a raise, a new market or a hire.</p>
-            <a class="btn btn--light" href="#contact">Book a strategy call</a>
+            <a class="btn btn--light" href="#contact" data-interest="Strategy call">Book a strategy call</a>
           </div>
           <ul class="offer__list">
             <li>Marketing audit</li>
@@ -205,9 +205,37 @@
       <div class="band__grid">
         <h2 id="contact-head">Heading to a conference?</h2>
         <p>Or raising, rebranding or hiring? Tell us what you are building and who needs to understand it.</p>
+        <form id="enquiry-form" class="enquiry" novalidate>
+          <input type="text" name="_honey" class="enquiry-honey" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <input type="hidden" name="_subject" value="Blacklight Studios enquiry" data-base="Blacklight Studios enquiry">
+          <input type="hidden" name="_template" value="table">
+          <input type="hidden" name="_captcha" value="false">
+          <input type="hidden" name="interest" id="enquiry-interest" value="">
+          <div class="enquiry-grid">
+            <p class="enquiry-field">
+              <label for="enquiry-name">Name</label>
+              <input type="text" id="enquiry-name" name="name" autocomplete="name" required>
+            </p>
+            <p class="enquiry-field">
+              <label for="enquiry-business">Business</label>
+              <input type="text" id="enquiry-business" name="business" autocomplete="organization">
+            </p>
+            <p class="enquiry-field enquiry-field--full">
+              <label for="enquiry-contact">Email or phone</label>
+              <input type="text" id="enquiry-contact" name="email_or_phone" autocomplete="on" required>
+            </p>
+            <p class="enquiry-field enquiry-field--full">
+              <label for="enquiry-message">Message</label>
+              <textarea id="enquiry-message" name="message" rows="5" required></textarea>
+            </p>
+          </div>
+          <div class="enquiry-actions">
+            <button type="submit" class="btn btn--light">Send enquiry</button>
+          </div>
+          <p class="enquiry-msg" role="status" hidden></p>
+        </form>
         <dl class="contact">
-          <div><dt>Email</dt><dd><span class="fill" data-fill="email">Email address to come</span></dd></div>
-          <div><dt>Phone</dt><dd><span class="fill" data-fill="phone">Number to come</span></dd></div>
+          <div><dt>Email</dt><dd><a href="mailto:mekdimtesfaye07@gmail.com">mekdimtesfaye07@gmail.com</a></dd></div>
           <div><dt>Based in</dt><dd>Brisbane and the Gold Coast</dd></div>
           <div class="clock"><dt>Time in Brisbane</dt><dd><span data-clock></span></dd></div>
         </dl>
@@ -230,5 +258,133 @@
 </footer>
 
 <script src="hud.js"></script>
+
+<script>
+(function () {
+  const ENDPOINT = 'https://formsubmit.co/ajax/9abb9cd76aea325fcc3a51e669157473';
+  const OK = "Thanks, I'll get back to you shortly.";
+  const ERR = "Sorry, that didn't send. Please email me directly and I'll get back to you.";
+  const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const PRESETS = {
+    'Intro call': 'I would like to book an intro call.',
+    'Strategy call': 'I would like to book a strategy call.'
+  };
+
+  const form = document.getElementById('enquiry-form');
+  if (!form) return;
+
+  const honey = form.querySelector('[name=_honey]');
+  const subject = form.querySelector('[name=_subject]');
+  const interest = form.querySelector('[name=interest]');
+  const message = form.querySelector('[name=message]');
+  const contact = form.querySelector('[name=email_or_phone]');
+  const msg = form.querySelector('.enquiry-msg');
+  const send = form.querySelector('[type=submit]');
+
+  function setMsg(el, text, ok) {
+    el.hidden = false;
+    el.textContent = text;
+    el.classList.toggle('is-ok', !!ok);
+    el.classList.toggle('is-err', !ok);
+  }
+
+  function isEmailOrPhone(value) {
+    const v = value.trim();
+    if (EMAIL.test(v)) return 'email';
+    const digits = v.replace(/\D/g, '');
+    if (digits.length >= 8 && digits.length <= 15 && /^[+]?[\d\s().-]+$/.test(v)) return 'phone';
+    return null;
+  }
+
+  function applyInterest(value) {
+    if (interest) interest.value = value || '';
+    if (subject) {
+      const base = subject.getAttribute('data-base') || 'Blacklight Studios enquiry';
+      subject.value = value ? base + ': ' + value : base;
+    }
+    if (message) {
+      const current = (message.value || '').trim();
+      const presetValues = Object.values(PRESETS);
+      const preset = PRESETS[value] || '';
+      if (!current || presetValues.includes(current)) {
+        message.value = preset;
+      }
+    }
+  }
+
+  document.querySelectorAll('a[href="#contact"][data-interest]').forEach((link) => {
+    link.addEventListener('click', () => {
+      applyInterest(link.getAttribute('data-interest') || '');
+    });
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (send.disabled) return;
+
+    const required = form.querySelectorAll('[required]');
+    for (const field of required) {
+      const value = (field.value || '').trim();
+      field.value = value;
+      if (!value) {
+        field.setCustomValidity('Please fill in this field');
+        field.reportValidity();
+        setMsg(msg, 'Please fill in the required fields.', false);
+        field.focus();
+        return;
+      }
+      field.setCustomValidity('');
+    }
+
+    const contactValue = (contact.value || '').trim();
+    const kind = isEmailOrPhone(contactValue);
+    if (!kind) {
+      contact.setCustomValidity('Please enter an email address or a phone number');
+      contact.reportValidity();
+      setMsg(msg, 'Please enter an email address or a phone number.', false);
+      contact.focus();
+      return;
+    }
+    contact.setCustomValidity('');
+
+    if (honey && honey.value) {
+      setMsg(msg, OK, true);
+      send.hidden = true;
+      form.querySelectorAll('input:not([type=hidden]), textarea, button').forEach((el) => { el.disabled = true; });
+      return;
+    }
+
+    send.disabled = true;
+    const body = {};
+    new FormData(form).forEach((value, key) => {
+      if (key === '_honey') return;
+      body[key] = value;
+    });
+    if (kind === 'email') {
+      body.email = contactValue;
+      body._replyto = contactValue;
+    }
+
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json().catch(() => ({}));
+      const text = String(data.message || '').toLowerCase();
+      const ok = res.ok && (data.success === true || data.success === 'true' || text.includes('submitted') || text.includes('activat'));
+      if (!ok) throw new Error('submit failed');
+      setMsg(msg, OK, true);
+      send.hidden = true;
+      form.querySelectorAll('input:not([type=hidden]), textarea, button').forEach((el) => { el.disabled = true; });
+    } catch (err) {
+      setMsg(msg, ERR, false);
+      send.disabled = false;
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
